@@ -1,0 +1,99 @@
+#4: Probability of a man and woman sharing a birthday
+
+import numpy as np
+from matplotlib import pyplot as plt
+import bisect
+import scipy.special
+import scipy.stats as st
+
+X = 365
+
+#No. days in a year
+daysInYear = np.linspace(365,365,1)
+
+no_men= np.linspace(1,60,60)
+no_women= np.linspace(1,60,60)
+
+prob =np.zeros((len(no_women), len(no_men)))
+uncert_list =np.zeros((len(no_women), len(no_men)))
+
+
+#No. times to loop on each N
+loops = 1000
+
+for year in range(len(daysInYear)):
+    print(year)
+    year = 365
+    birthday =[]
+   
+    for M in range(len(no_men)):
+        print(M)
+       
+        for W in range(len(no_women)):
+       
+            no_loops=0
+       
+            for k in range(loops):
+               
+                M_birthday = []
+                W_birthday = []
+                shared = 0
+                for i in range(M):
+                    Mday = int(np.random.uniform(0,year-1))
+                    M_birthday.append(Mday)
+               
+                for i in range(W):
+                    Wday = int(np.random.uniform(0,year-1))
+                    W_birthday.append(Wday)
+                   
+                    for j in range(len(M_birthday)):
+                        if Wday == M_birthday[j]:
+                            shared = 1
+                            break
+                    if shared == 1:
+                        no_loops+=1
+                        break
+             
+            prob[W,M] = no_loops/loops
+           
+            p = no_loops/loops
+            N = loops
+            nin = no_loops
+           
+            S2 = N/(N-1)*(p-p**2)
+            Phi = st.norm.ppf(0.95)
+            epsilon = np.sqrt(S2/N)*Phi
+            uncert_list[W,M] = epsilon
+
+
+pixel_plot = plt.figure()
+plt.xlabel("Number of Men in the group")
+plt.ylabel("Number of Women in the group")
+pixel_plot = plt.imshow(prob, cmap = "gray", origin = "lower")
+plt.colorbar(pixel_plot)
+
+xcoord =[]
+ycoord =[]
+
+upper = 0.50
+lower = 0.50
+
+for M in range(len(no_men)):
+    for W in range(len(no_women)):
+       
+        if lower<=prob[W,M] <=upper :
+            plt.plot(W,M, "bx")
+            xcoord.append(M)
+            ycoord.append(W)
+        elif prob[W,M] >= upper and prob[W,M] - uncert_list[W,M] <=upper:
+            plt.plot(W,M, "bx")
+            xcoord.append(M)
+            ycoord.append(W)
+        elif prob[W,M] <= lower and prob[W,M] + uncert_list[W,M] >=lower:
+            plt.plot(W,M, "bx")
+            xcoord.append(M)
+            ycoord.append(W)
+plt.plot(ycoord[1],xcoord[1], "bx", label="p=0.5")            
+       
+plt.legend()
+plt.show(pixel_plot)
