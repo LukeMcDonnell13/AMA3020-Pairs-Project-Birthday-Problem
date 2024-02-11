@@ -1,0 +1,132 @@
+#3: Plots both general and specific birthday probability on one graph
+
+import numpy as np
+from matplotlib import pyplot as plt
+import bisect
+import scipy.special
+import scipy.stats as st
+from math import comb
+
+def Birthday(year, no_people, loops):
+    prob =[]
+    uncert_list =[]
+    birthday =[]
+   
+    for N in range(len(no_people)):
+       
+        no_loops=0
+   
+        for k in range(loops):
+           
+            birthday =[]
+            shared = 0
+            for i in range(N):
+                day = int(np.random.uniform(0,year-1))
+               
+                for j in range(len(birthday)):
+                    if day == birthday[j]:
+                        shared = 1
+                        break
+                birthday.append(day)
+                if shared == 1:
+                    no_loops+=1
+                    break
+       
+        p = no_loops/loops
+        N = loops 
+        prob.append(p)
+      
+        S2 = N/(N-1)*(p-p**2)
+        Phi = st.norm.ppf(0.95)
+        epsilon = np.sqrt(S2/N)*Phi
+        uncert_list.append(epsilon)
+      
+    n = no_people
+    d = year
+   
+    comb1=[]
+    for i in range(len(n)):
+        comb1.append(comb(d,int(n[i])))
+   
+    Prob2 = 1-(comb1*scipy.special.factorial(n)/(d**n))
+   
+    return no_people, prob, uncert_list, n, Prob2
+
+def MinPeople(no_people,prob,uncert_list,lower,upper):
+    for i in range(len(no_people)):
+        if lower<=prob[i]<=upper :
+            print(i)
+        elif prob[i] >= upper and prob[i] - uncert_list[i] <=upper:
+            print(i)
+        elif prob[i] <= lower and prob[i] + uncert_list[i] >=lower:
+            print(i)
+   
+    value = bisect.bisect_left(Prob2, 0.5)    
+    print("No. of people for a 50% chance of a shared birthday:", value+1)
+      
+def MyBirthday(year, no_people, loops):
+    prob =[]
+    uncert_list = []
+    my_bday = int(np.random.uniform(0,year-1))
+   
+    for N in range(len(no_people)):
+        no_loops=0
+   
+        for k in range(loops):
+            for i in range(N):
+                day = int(np.random.uniform(0,year-1))
+                if day == my_bday :
+                    no_loops+=1
+                    break
+         
+        p = no_loops/loops
+        N = loops
+        prob.append(p)
+       
+        S2 = N/(N-1)*(p-p**2)
+        Phi = st.norm.ppf(0.95)
+        epsilon = np.sqrt(S2/N)*Phi
+        uncert_list.append(epsilon)
+       
+    n = no_people
+    d = year
+    Prob_my = 1-(1-1/d)**n
+
+   
+    return no_people, prob, uncert_list, n, Prob_my
+
+
+def MyMinPeople(no_people,prob,uncert_list,lower,upper):
+    for i in range(len(no_people)):
+        if lower<=prob[i]<=upper :
+            print(i)
+        elif prob[i] >= upper and prob[i] - uncert_list[i] <=upper:
+            print(i)
+        elif prob[i] <= lower and prob[i] + uncert_list[i] >=lower:
+            print(i)
+   
+    value = bisect.bisect_left(prob, 0.5)    
+    print("No. of people for a 50% chance of a shared birthday:", value+1)
+   
+
+year = 365
+no_people= np.linspace(1,300,300)
+loops = 1000
+lower = 0.49
+upper = 0.51
+
+#Birthday(year,no_people,loops)
+no_people, prob, uncert_list, n, Prob2 = Birthday(365,no_people,loops)
+plt.errorbar(no_people, prob, yerr=uncert_list, fmt=".", alpha = 0.5, label="General shared birthday")
+plt.plot(n,Prob2, "k")
+MinPeople(no_people,prob,uncert_list,lower,upper)
+
+no_people, prob, uncert_list, n, Prob_my = MyBirthday(365, no_people, loops)
+plt.errorbar(no_people, prob, yerr=uncert_list, fmt="g.", alpha = 0.3, label="Specific shared birthday")
+plt.plot(n,Prob_my, "k")
+MinPeople(no_people,prob,uncert_list,lower,upper)
+
+plt.xlabel("Number of people")
+plt.ylabel("Probability of a shared birthday")
+plt.legend()
+plt.show()
