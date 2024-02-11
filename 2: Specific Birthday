@@ -1,0 +1,89 @@
+#2: Probability that someone shares a specific birthday
+
+import numpy as np
+from matplotlib import pyplot as plt
+import bisect
+import scipy.stats as st
+
+
+def Birthday(year, no_people, loops):
+    prob =[]
+    uncert_list = []
+    my_bday = int(np.random.uniform(0,year-1))
+   
+    for N in range(len(no_people)):
+        no_loops=0
+        print(N)
+   
+        for k in range(loops):
+            for i in range(N):
+                day = int(np.random.uniform(0,year-1))
+                if day == my_bday :
+                    no_loops+=1
+                    break
+         
+        p = no_loops/loops
+        N = loops
+       
+        prob.append(p)
+       
+        S2 = N/(N-1)*(p-p**2)
+        Phi = st.norm.ppf(0.95)
+        epsilon = np.sqrt(S2/N)*Phi
+        uncert_list.append(epsilon)
+       
+       
+    n = no_people
+    d = year
+    Prob_my = 1-(1-1/d)**n
+
+   
+    return no_people, prob, uncert_list, n, Prob_my
+
+
+def MinPeople(no_people,prob,uncert_list,lower,upper):
+    for i in range(len(no_people)):
+        if lower<=prob[i]<=upper :
+            print(i)
+        elif prob[i] >= upper and prob[i] - uncert_list[i] <=upper:
+            print(i)
+        elif prob[i] <= lower and prob[i] + uncert_list[i] >=lower:
+            print(i)
+   
+    value = bisect.bisect_left(prob, 0.5)    
+    print("No. of people for a 50% chance of a shared birthday:", value+1)
+
+
+
+year = 365
+no_people= np.linspace(1,365,365)
+loops = 1000
+lower = 0.50
+upper = 0.50
+
+no_people, prob, uncert_list, n, Prob_my = Birthday(100, no_people, loops)
+plt.errorbar(no_people, prob, yerr=uncert_list, fmt=".", alpha = 0.2, label="100 day year")
+plt.plot(n,Prob_my, "k")
+MinPeople(no_people,prob,uncert_list,lower,upper)
+
+no_people, prob, uncert_list, n, Prob_my = Birthday(365, no_people, loops)
+plt.errorbar(no_people, prob, yerr=uncert_list, fmt=".", alpha = 0.2, label="365 day year")
+plt.plot(n,Prob_my, "k")
+MinPeople(no_people,prob,uncert_list,lower,upper)
+
+no_people, prob, uncert_list, n, Prob_my = Birthday(500, no_people, loops)
+plt.errorbar(no_people, prob, yerr=uncert_list, fmt=".", alpha = 0.2, label="500 day year")
+plt.plot(n,Prob_my, "k")
+MinPeople(no_people,prob,uncert_list,lower,upper)
+
+no_people, prob, uncert_list, n, Prob_my = Birthday(1000, no_people, loops)
+plt.errorbar(no_people, prob, yerr=uncert_list, fmt=".", alpha = 0.2, label="1000 day year")
+plt.plot(n,Prob_my, "k")
+MinPeople(no_people,prob,uncert_list,lower,upper)
+
+plt.xlabel("Number of people")
+plt.ylabel("Probability of a shared birthday")
+plt.legend()
+plt.show()
+
+
